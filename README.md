@@ -75,6 +75,7 @@ Key settings:
 | `DLBOT_LOG_DIR` | `logs` | log files |
 | `DLBOT_WORKER_POLL_INTERVAL` | `3` | seconds between queue polls |
 | `DLBOT_MAX_ATTEMPTS` | `2` | attempts before a job is failed |
+| `DLBOT_DEFAULT_FORMAT` | `video` | format used by `/download` when no format is chosen (`video` or `audio`) |
 | `DLBOT_COOKIES_FILE` | *(empty)* | Netscape `cookies.txt` (e.g. for Instagram) |
 | `DLBOT_LOG_LEVEL` | `INFO` | console log level (files are always DEBUG) |
 
@@ -104,7 +105,7 @@ server, and restart the bot after code changes.
 | Parameter | Required | Description |
 |---|---|---|
 | `url` | yes | YouTube video or Instagram Reel/post link |
-| `format` | no | `video` (default, mp4) or `audio` (mp3) |
+| `format` | no | `video` (mp4) or `audio` (mp3); if omitted, uses `DLBOT_DEFAULT_FORMAT` |
 | `prefix` | no | prepended to the sanitized title |
 | `suffix` | no | appended to the sanitized title |
 | `subdir` | no | single folder name the file is moved into |

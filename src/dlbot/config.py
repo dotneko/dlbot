@@ -75,6 +75,9 @@ class Settings:
     max_attempts: int
     cookies_file: Path | None
 
+    # Download defaults
+    default_format: str
+
     # Logging
     log_level: str
 
@@ -104,6 +107,12 @@ def load_settings() -> Settings:
         if not cookies_file.is_absolute():
             cookies_file = PROJECT_ROOT / cookies_file
 
+    default_format = _env_str("DLBOT_DEFAULT_FORMAT", "video").lower()
+    if default_format not in ("audio", "video"):
+        raise SystemExit(
+            f"ERROR: DLBOT_DEFAULT_FORMAT={default_format!r} must be 'audio' or 'video'"
+        )
+
     return Settings(
         discord_token=_env_str("DISCORD_TOKEN", ""),
         discord_channel_id=_env_int_opt("DISCORD_CHANNEL_ID"),
@@ -114,5 +123,6 @@ def load_settings() -> Settings:
         poll_interval=float(_env_int("DLBOT_WORKER_POLL_INTERVAL", 3)),
         max_attempts=_env_int("DLBOT_MAX_ATTEMPTS", 2),
         cookies_file=cookies_file,
+        default_format=default_format,
         log_level=log_level,
     )

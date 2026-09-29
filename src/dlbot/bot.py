@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Literal
+from typing import Literal, Optional
 
 import discord
 from discord import app_commands
@@ -41,7 +41,7 @@ class DownloadCommand(app_commands.Command):
 
     @app_commands.describe(
         url="YouTube or Instagram video/Reel link to download",
-        format="video (mp4) or audio (mp3)",
+        format="video (mp4) or audio (mp3); if omitted, uses the configured default",
         prefix="Text to prepend to the (sanitized) title",
         suffix="Text to append to the (sanitized) title",
         subdir="Single folder name to move the file into",
@@ -50,12 +50,14 @@ class DownloadCommand(app_commands.Command):
         self,
         interaction: discord.Interaction,
         url: str,
-        format: Literal["video", "audio"] = "video",
+        format: Optional[Literal["video", "audio"]] = None,
         prefix: str = None,
         suffix: str = None,
         subdir: str = None,
     ) -> None:
         settings, db = self.settings, self.db
+        # Use the user's explicit choice when given, otherwise the configured default.
+        media_format = format if format is not None else settings.default_format
 
         # Channel restriction (the bot "monitors" a specific channel).
         if settings.discord_channel_id and interaction.channel_id != settings.discord_channel_id:
@@ -79,7 +81,7 @@ class DownloadCommand(app_commands.Command):
         job_id = db.enqueue_download(
             url=parsed.url,
             platform=parsed.platform,
-            media_type=format,
+            media_type=media_format,
             prefix=clean_prefix,
             suffix=clean_suffix,
             subdir=clean_subdir,
@@ -96,7 +98,7 @@ class DownloadCommand(app_commands.Command):
             color=discord.Color.blue(),
         )
         embed.add_field(name="Platform", value=parsed.platform, inline=True)
-        embed.add_field(name="Format", value=format, inline=True)
+        embed.add_field(name="Format", value=media_format, inline=True)
         embed.add_field(name="Queue position", value=str(position), inline=True)
         if clean_subdir:
             embed.add_field(name="Subdir", value=clean_subdir, inline=True)
@@ -114,7 +116,7 @@ class DownloadCommand(app_commands.Command):
         log.info(
             "job %d enqueued by %s in channel %s (%s %s)",
             job_id, interaction.user, interaction.channel_id,
-            parsed.platform, format,
+            parsed.platform, media_format,
         )
 
 
