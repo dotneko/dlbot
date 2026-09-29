@@ -93,7 +93,6 @@ def _build_options(job_id: int, work_dir: Path, media_type: str,
                    cookies_file: Path | None) -> dict[str, Any]:
     options: dict[str, Any] = {
         "outtmpl": str(work_dir / "%(title).100B [%(id)s].%(ext)s"),
-        "paths": {"home": str(work_dir)},
         "noplaylist": True,
         "quiet": True,
         "no_warnings": True,
@@ -115,7 +114,6 @@ def _build_options(job_id: int, work_dir: Path, media_type: str,
                 "format": "bestaudio/best",
                 "postprocessors": [
                     {"key": "FFmpegExtractAudio", "preferredcodec": "mp3", "preferredquality": "192"},
-                    {"key": "MoveFiles"},
                 ],
             }
         )
