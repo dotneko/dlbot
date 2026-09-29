@@ -1,0 +1,20 @@
+[project]
+name = "dlbot"
+version = "0.1.0"
+description = "Discord bot that queues YouTube/Instagram downloads via yt-dlp"
+readme = "README.md"
+authors = [
+    { name = "dotneko", email = "dotneko@gm24.local" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    "discord.py>=2.4,<3",
+    "yt-dlp>=2025.1.15",
+]
+
+[project.scripts]
+dlbot = "dlbot:main"
+
+[build-system]
+requires = ["uv_build>=0.12.19,<0.13.0"]
+build-backend = "uv_build"
