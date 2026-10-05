@@ -21,7 +21,7 @@ import unicodedata
 logger = logging.getLogger("dlbot.filenames")
 
 #: Default maximum length for the generated stem (prefix + title + suffix).
-MAX_STEM_LENGTH = 150
+MAX_STEM_LENGTH = 80
 
 #: Explicit emoji / pictograph / symbol blocks (plus invisible joiners).
 _EMOJI_RANGES = (
