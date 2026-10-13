@@ -39,6 +39,7 @@ _EMOJI_RANGES = (
     "\u2049\u203C"           # Bang / double exclamation
     "\u00A9\u00AE"           # (c) / (r)
     "\u2122"                 # Trademark
+    "\u3000"                 # Ideographic space
 )
 _EMOJI_RE = re.compile(f"[{_EMOJI_RANGES}]")
 
