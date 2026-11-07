@@ -63,6 +63,7 @@ user ─▶ /download ─▶ bot (discord.py) ─▶ SQLite queue ◀── poll
 
 ```bash
 cp .env.example .env
+```
 Key settings:
 
 | Variable | Default | Purpose |
