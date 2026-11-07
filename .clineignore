@@ -1,0 +1,15 @@
+# Environment and secrets
+.env
+.env.*
+*.pem
+*.key
+!/.env.example
+
+# Cloud credentials
+credentials/
+secrets/
+serviceAccountKey.json
+
+# Build artifacts with potential embedded secrets
+.next/
+dist/

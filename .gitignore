@@ -6,11 +6,15 @@ dist/
 wheels/
 *.egg-info
 
-# Virtual environments
+# Environments and secrets
 .venv
+.env
+.env.*
+*.pem
+*.key
+!/.env.example
 
 # Runtime artifacts
-.env
 data/
 downloads/
 logs/
