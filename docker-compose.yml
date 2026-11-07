@@ -1,0 +1,97 @@
+# ---------------------------------------------------------------------------
+# dlbot — Discord video download bot (bot + yt-dlp worker) in Docker.
+#
+# Required: a Discord bot token. It is intentionally NOT hardcoded here —
+# Compose resolves ${DISCORD_TOKEN} from your shell environment (export it, or
+# use any environment file Compose reads for interpolation). See .env.example
+# for the full list of supported variables.
+#
+#   docker compose up -d --build                  # single container (bot + worker)
+#   docker compose logs -f dlbot                  # live console logs
+#   docker compose --profile split up -d --build  # separate bot + worker containers
+#   docker compose down                           # stop (data persists on the host)
+#
+# Host layout (created on first run, persisted via bind mounts):
+#   ./data       SQLite queue (WAL)        ./logs  bot.log / worker.log (rotated)
+#   ./downloads  finished media
+# ---------------------------------------------------------------------------
+
+name: dlbot
+
+x-dlbot: &dlbot
+  build:
+    context: .
+    dockerfile: Dockerfile
+    args:
+      # Keep the image uid/gid aligned with the host user that owns ./data,
+      # ./downloads and ./logs, otherwise writes fail with EACCES.
+      DLBOT_UID: "${DLBOT_UID:-1000}"
+      DLBOT_GID: "${DLBOT_GID:-1000}"
+  image: dlbot:local
+  # Reaps the worker child process in combined mode and forwards SIGTERM to it.
+  init: true
+  restart: unless-stopped
+  # The worker finishes its in-flight download before exiting; killing it sooner
+  # leaves the job stuck in 'processing' until it is reset manually.
+  stop_grace_period: 15m
+  security_opt:
+    - no-new-privileges:true
+  # Custom bridge networks only inherit the host's upstream resolvers, and this
+  # host's /etc/resolv.conf is a dangling systemd-resolved stub symlink, so
+  # containers would otherwise fail with "Temporary failure in name resolution".
+  # Harmless on hosts with working DNS; override or delete if you need a private
+  # resolver: DLBOT_DNS_1/2=... docker compose up.
+  dns:
+    - "${DLBOT_DNS_1:-1.1.1.1}"
+    - "${DLBOT_DNS_2:-8.8.8.8}"
+  environment:
+    # --- Discord ------------------------------------------------------------
+    DISCORD_TOKEN: "${DISCORD_TOKEN:?DISCORD_TOKEN must be exported before running this stack}"
+    # Empty values are valid: no channel restriction, global slash-command sync.
+    DISCORD_CHANNEL_ID: "${DISCORD_CHANNEL_ID:-}"
+    DISCORD_GUILD_ID: "${DISCORD_GUILD_ID:-}"
+    # --- Storage (absolute container paths; the bind mounts below persist them) --
+    DLBOT_DATABASE: /app/data/dlbot.db
+    DLBOT_DOWNLOAD_DIR: /app/downloads
+    DLBOT_LOG_DIR: /app/logs
+    # --- Worker -------------------------------------------------------------
+    DLBOT_WORKER_POLL_INTERVAL: "${DLBOT_WORKER_POLL_INTERVAL:-3}"
+    DLBOT_MAX_ATTEMPTS: "${DLBOT_MAX_ATTEMPTS:-2}"
+    DLBOT_DEFAULT_FORMAT: "${DLBOT_DEFAULT_FORMAT:-video}"
+    # Cookies are needed for Instagram / age-restricted videos. Mount the file
+    # read-only (see the commented volume below) and point at its container path.
+    DLBOT_COOKIES_FILE: "${DLBOT_COOKIES_FILE:-}"
+    # --- Logging ------------------------------------------------------------
+    DLBOT_LOG_LEVEL: "${DLBOT_LOG_LEVEL:-INFO}"
+  volumes:
+    - ./data:/app/data
+    - ./downloads:/app/downloads
+    - ./logs:/app/logs
+    # - ./cookies.txt:/app/cookies.txt:ro   # pair with DLBOT_COOKIES_FILE=/app/cookies.txt
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+services:
+  # Default: exactly one container — the bot plus the worker it spawns, which is
+  # the same as running `uv run dlbot` locally.
+  dlbot:
+    <<: *dlbot
+
+  # Optional (profile "split"): one process per container, so the worker can be
+  # restarted or scaled (docker compose up -d --scale worker=2) without dropping
+  # the Discord connection. Both halves share the SQLite queue via ./data.
+  bot:
+    <<: *dlbot
+    profiles: ["split"]
+    command: ["bot"]
+
+  worker:
+    <<: *dlbot
+    profiles: ["split"]
+    command: ["worker"]
+    # Multiple workers are safe: jobs are claimed with BEGIN IMMEDIATE.
+    # deploy:
+    #   replicas: 2

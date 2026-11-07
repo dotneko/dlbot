@@ -1,0 +1,32 @@
+# Never bake local state or secrets into the image.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+cookies.txt
+
+# Virtualenv / build artifacts (the image installs its own venv)
+.venv/
+venv/
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Runtime data is bind-mounted from the host, not copied.
+data/
+downloads/
+logs/
+
+# VCS / editor / tooling
+.git/
+.gitignore
+.clinerules/
+.clineignore
+Dockerfile
+.dockerignore
+docker-compose.yml
+docker-compose.*.yml
